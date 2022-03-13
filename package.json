@@ -6,6 +6,7 @@
   "main": ".webpack/main",
   "scripts": {
     "start": "electron-forge start",
+    "style": "npx tailwindcss -i ./src/input.css -o ./src/index.css --watch",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
@@ -74,6 +75,7 @@
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.0.0",
     "@vercel/webpack-asset-relocator-loader": "1.7.0",
+    "autoprefixer": "^10.4.2",
     "css-loader": "^6.0.0",
     "electron": "17.1.2",
     "eslint": "^8.0.1",
@@ -81,6 +83,7 @@
     "fork-ts-checker-webpack-plugin": "^6.0.1",
     "node-loader": "^2.0.0",
     "style-loader": "^3.0.0",
+    "tailwindcss": "^3.0.23",
     "ts-loader": "^9.2.2",
     "typescript": "~4.5.4"
   },
