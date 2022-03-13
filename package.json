@@ -6,7 +6,7 @@
   "main": ".webpack/main",
   "scripts": {
     "start": "electron-forge start",
-    "style": "npx tailwindcss -i ./src/input.css -o ./src/index.css --watch",
+    "style": "npx tailwindcss -i ./src/styles/input.css -o ./src/styles/index.css --watch",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
