@@ -1,6 +1,5 @@
 import React from "react";
 import * as tf from "@tensorflow/tfjs";
-import * as tfjsWasm from "@tensorflow/tfjs-backend-wasm";
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -40,9 +39,9 @@ function Home() {
 
     // set up tensorflow backend
     const setTfBackend = async (videoEl: HTMLVideoElement) => {
-      tfjsWasm.setWasmPaths(
-        `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${tfjsWasm.version_wasm}/dist/`
-      );
+      // tfjsWasm.setWasmPaths(
+      //   `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${tfjsWasm.version_wasm}/dist/`
+      // );
       await tf.setBackend("webgl");
       await setupCamera(videoEl);
       const model = await faceLandmarksDetection.load(
