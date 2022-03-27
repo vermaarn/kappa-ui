@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { FaceMesh, Options } from "@mediapipe/face_mesh";
 
 import {
   AnnotatedPrediction,
@@ -24,6 +25,7 @@ function Main() {
   const [model, setModel] = useState<MediaPipeFaceMesh>();
   const [paused, setPaused] = useState(true);
   const [currentTool, setCurrentTool] = useState("✍️");
+  const [facemeshModel, setFacemeshModel] = useState<FaceMesh>()
 
   const onPlayPauseClick: React.MouseEventHandler<HTMLButtonElement> = async (
     e
@@ -41,6 +43,16 @@ function Main() {
   // setting tensorflow to use wasm backend
   useEffect(() => {
     const setTfBackend = async () => {
+      const faceMesh = new FaceMesh();
+      const options: Options = {
+        maxNumFaces: 1,
+        refineLandmarks: true,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+      };
+      faceMesh.setOptions(options);
+      // setFacemeshModel(faceMesh)
+
       await tf.setBackend("webgl");
       const model = await faceLandmarksDetection.load(
         faceLandmarksDetection.SupportedPackages.mediapipeFacemesh,
