@@ -1,14 +1,24 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { FaceMesh, Options } from "@mediapipe/face_mesh";
+import {
+  FaceMesh,
+  FACEMESH_TESSELATION,
+  NormalizedLandmark,
+  NormalizedLandmarkList,
+  Options,
+  ResultsListener,
+} from "@mediapipe/face_mesh";
+
+import "./timeline.css";
+
+import { drawConnectors } from "@mediapipe/drawing_utils";
+import markers from "./custom_markers.json";
 
 import {
   AnnotatedPrediction,
   MediaPipeFaceMesh,
 } from "@tensorflow-models/face-landmarks-detection/dist/mediapipe-facemesh";
-import * as faceLandmarksDetection from "@tensorflow-models/face-landmarks-detection";
 import "@tensorflow/tfjs-backend-webgl";
-import * as tf from "@tensorflow/tfjs";
-import Sidebar from "../../components/Sidebar/Sidebar";
+import { Timeline, DataSet, TimelineOptions } from "vis-timeline/standalone";
 
 function Main() {
   const NUM_KEYPOINTS = 468;
@@ -22,10 +32,96 @@ function Main() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const blenshapeVideoRef = useRef<HTMLVideoElement>(null);
   const [inputVideo, setInputVideo] = useState("");
-  const [model, setModel] = useState<MediaPipeFaceMesh>();
   const [paused, setPaused] = useState(true);
   const [currentTool, setCurrentTool] = useState("✍️");
-  const [facemeshModel, setFacemeshModel] = useState<FaceMesh>()
+  const [facemeshModel, setFacemeshModel] = useState<FaceMesh>();
+  const videoTimelineRef = useRef<HTMLDivElement>(null);
+  const [isVideoReady, setIsVideoReady] = useState(false);
+
+  const onRenderClick = useCallback(() => {
+    // {
+    //   "nose": [ {0,60, neutral pose}, {30, 60, nueral} ],
+    // },
+  }, []);
+
+  useEffect(() => {
+    const container = videoTimelineRef.current;
+    const video = videoRef.current;
+    if (!container || !video || !isVideoReady) return;
+
+    // create a DataSet with items
+    const items = new DataSet([
+      {
+        id: 1,
+        content: "Editable",
+        editable: true,
+        start: 0,
+        end: 23,
+        group: 1,
+      },
+      {
+        id: 2,
+        content: "Editable",
+        editable: true,
+        start: 23,
+        end: 27,
+        group: 2,
+      },
+      {
+        id: 3,
+        content: "Timeline",
+        editable: false,
+        start: 10,
+        end: 30,
+        group: 2,
+        color: "#0f0f0f",
+      },
+    ]);
+
+    const groups = new DataSet(
+      ["nose", "l_brow", "r_brow", "l_eye", "r_eye", "i_lips", "o_lips"].map(
+        (name, idx) => ({ id: idx, content: name, value: idx + 1 })
+      )
+    );
+
+    const options: TimelineOptions = {
+      min: 0,
+      max: video.duration,
+      multiselect: true,
+      editable: {
+        add: true,
+        remove: true,
+        updateGroup: false,
+        updateTime: true,
+        overrideItems: false,
+      },
+    };
+
+    const timeline = new Timeline(container, items, groups, options);
+    timeline.setWindow(0, video.duration, { animation: false });
+    const currVideoTimeId = timeline.addCustomTime(0);
+    video.addEventListener("timeupdate", (e) => {
+      if (!video.paused) {
+        const time = e.timeStamp / 1000;
+        timeline.setCustomTime(time, currVideoTimeId);
+      }
+    });
+    // timeline.on("timechange", (e) => {
+    //   video.currentTime = e.time.getTime()
+    // });
+
+    // const updateEditOptions = function (e: any) {
+    //   const changedOption: any = e.target.name;
+    //   const options: any = { editable: {} };
+    //   options.editable[changedOption] = e.target.checked;
+    //   timeline.setOptions(options);
+    // };
+
+    // const cbs = document.getElementsByTagName("input");
+    // [].forEach.call(cbs, (cb: any) => {
+    //   cb.onchange = updateEditOptions;
+    // });
+  }, [videoTimelineRef, videoRef, isVideoReady]);
 
   const onPlayPauseClick: React.MouseEventHandler<HTMLButtonElement> = async (
     e
@@ -42,35 +138,26 @@ function Main() {
 
   // setting tensorflow to use wasm backend
   useEffect(() => {
-    const setTfBackend = async () => {
-      const faceMesh = new FaceMesh();
-      const options: Options = {
-        maxNumFaces: 1,
-        refineLandmarks: true,
-        minDetectionConfidence: 0.5,
-        minTrackingConfidence: 0.5,
-      };
-      faceMesh.setOptions(options);
-      // setFacemeshModel(faceMesh)
-
-      await tf.setBackend("webgl");
-      const model = await faceLandmarksDetection.load(
-        faceLandmarksDetection.SupportedPackages.mediapipeFacemesh,
-        {
-          maxFaces: MAX_FACES,
-        }
-      );
-      return model;
+    const faceMesh = new FaceMesh({
+      locateFile: (file) => {
+        return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
+      },
+    });
+    const options: Options = {
+      maxNumFaces: 1,
+      refineLandmarks: true,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5,
     };
-
-    setTfBackend().then((model) => setModel(model));
+    faceMesh.setOptions(options);
+    setFacemeshModel(faceMesh);
   }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const videoEl = videoRef.current;
 
-    if (!canvas || !videoEl || !model) return;
+    if (!canvas || !videoEl || !facemeshModel) return;
 
     const ctx = canvas.getContext("2d");
     const ratio = getPixelRatio(ctx);
@@ -133,6 +220,30 @@ function Main() {
       }
     });
 
+    const grouped_marker: { [key: string]: number[] } = {
+      nose: markers.nose.tip.concat(markers.nose.dorsum),
+      l_brow: markers.brow.leftUpper.concat(markers.brow.leftLower),
+      r_brow: markers.brow.rightUpper.concat(markers.brow.rightLower),
+      l_eye: markers.eye.left,
+      r_eye: markers.eye.right,
+      i_lips: markers.lips.inner,
+      o_lips: markers.lips.outer,
+      anchors: markers.additional_anchors,
+    };
+
+    const { nose, l_brow, r_brow, l_eye, r_eye, i_lips, o_lips, anchors } =
+      grouped_marker;
+
+    let selectedMarkers: { [name: string]: boolean } = {
+      nose: false,
+      l_brow: false,
+      r_brow: false,
+      l_eye: false,
+      r_eye: false,
+      i_lips: false,
+      o_lips: false,
+    };
+
     canvas.addEventListener("mousemove", (e) => {
       if (flag) {
         prevX = currX;
@@ -152,20 +263,45 @@ function Main() {
           currY <= initalY + laxFactor &&
           currY >= initalY - laxFactor
         ) {
-          const prediction = predictions[0];
-          const keypoints = prediction.scaledMesh as any[];
+          // const prediction = predictions[0];
+          const keypoints = predArr[0];
           keypoints.forEach((pt, idx) => {
             ctx.fillStyle = GREEN;
             ctx.lineWidth = 0.5;
-            const x = pt[0];
-            const y = pt[1];
+            const x = pt.x * ctx.canvas.width;
+            const y = pt.y * ctx.canvas.height;
+
             if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
               capturedPoints.push(idx);
-              ctx.beginPath();
-              ctx.arc(x, y, 2, 0, 2 * Math.PI);
-              ctx.fill();
+              // ctx.beginPath();
+              // ctx.arc(x, y, 2, 0, 2 * Math.PI);
+              // ctx.fill();
             }
           });
+
+          for (const label in grouped_marker) {
+            capturedPoints.forEach((ptIdx) => {
+              if (grouped_marker[label].includes(ptIdx)) {
+                selectedMarkers[label] = true;
+              }
+            });
+            if (selectedMarkers[label]) {
+              grouped_marker[label].forEach((ptIdx) => {
+                ctx.fillStyle = GREEN;
+                ctx.lineWidth = 0.5;
+                const pt = keypoints[ptIdx];
+                const x = pt.x * ctx.canvas.width;
+                const y = pt.y * ctx.canvas.height;
+                ctx.beginPath();
+                ctx.arc(x, y, 2, 0, 2 * Math.PI);
+                ctx.fill();
+              });
+            }
+          }
+
+          // capturedPoints.forEach((idx) => {
+          //   for ()
+          // })
 
           console.log(minX, maxX, minY, maxY, capturedPoints);
         }
@@ -184,9 +320,50 @@ function Main() {
       flag = false;
     });
 
+    let predArr: NormalizedLandmarkList[] = [];
+    const resultListener: ResultsListener = (res) => {
+      if (!paused) {
+        console.log("SS", selectedMarkers);
+        predArr = res.multiFaceLandmarks as NormalizedLandmarkList[];
+        requestId = requestAnimationFrame(render);
+      }
+    };
+
+    facemeshModel.onResults(resultListener);
+
+    const paintModelPt = (
+      groupLabel: string,
+      landmarks: NormalizedLandmarkList,
+      color: string
+    ) => {
+      grouped_marker[groupLabel].forEach((ptIdx) => {
+        const pt = landmarks[ptIdx];
+        const x = pt.x * ctx.canvas.width;
+        const y = pt.y * ctx.canvas.height;
+
+        // if mouse is around the point
+        ctx.fillStyle = color;
+        ctx.lineWidth = 2;
+
+        // const laxFactor = 1;
+        // if (
+        //   currX <= x + laxFactor &&
+        //   currX >= x - laxFactor &&
+        //   currY <= y + laxFactor &&
+        //   currY >= y - laxFactor
+        // ) {
+        //   ctx.fillStyle = GREEN;
+        // }
+
+        ctx.beginPath();
+        ctx.arc(x, y, 2, 0, 2 * Math.PI);
+        ctx.fill();
+      });
+    };
+
     const render = async () => {
-      const paused = videoEl.paused;
       if (!ctx) return;
+      ctx.save();
 
       ctx.drawImage(
         videoEl,
@@ -200,79 +377,71 @@ function Main() {
         ctx.canvas.height
       );
 
-      // if (paused) return;
-      model
-        .estimateFaces({
-          input: canvas,
-          returnTensors: false,
-          flipHorizontal: false,
-          predictIrises: false,
-        })
-        .then((res) => {
-          predictions = res;
-          if (!paused) {
-            requestId = requestAnimationFrame(render);
-          }
-        });
-
-      // requestId = requestAnimationFrame(render);
+      await facemeshModel.send({ image: canvas });
 
       ctx.strokeStyle = RED;
       ctx.fillStyle = RED;
       ctx.lineWidth = 0.5;
 
-      predictions.forEach((prediction) => {
-        const keypoints = prediction.scaledMesh as any[];
-        keypoints.forEach((pt, idx) => {
-          // ctx.fillStyle = idx in capturedPoints ? GREEN : RED;
-
-          const x = pt[0];
-          const y = pt[1];
-
-          ctx.beginPath();
-          ctx.arc(x, y, 2, 0, 2 * Math.PI);
-          ctx.fill();
+      predArr.forEach((landmarks) => {
+        drawConnectors(ctx, landmarks, FACEMESH_TESSELATION, {
+          color: "#C0C0C070",
+          lineWidth: 0.5,
         });
+
+        for (const key in grouped_marker) {
+          // console.log(selectedMarkers, selectedMarkers[key]);
+          if (selectedMarkers[key]) {
+            paintModelPt(key, landmarks, GREEN);
+          } else {
+            paintModelPt(key, landmarks, RED);
+          }
+        }
+
+        // nose.forEach((ptIdx) =>   paintModelPt(landmarks[ptIdx], "#d13c4b"));
+        // l_brow.forEach((ptIdx) => paintModelPt(landmarks[ptIdx], "#c0267e"));
+        // r_brow.forEach((ptIdx) => paintModelPt(landmarks[ptIdx], "#4f9125"));
+        // l_eye.forEach((ptIdx) =>  paintModelPt(landmarks[ptIdx], "#8d0179"));
+        // r_eye.forEach((ptIdx) =>  paintModelPt(landmarks[ptIdx], "#f98faf"));
+        // i_lips.forEach((ptIdx) => paintModelPt(landmarks[ptIdx], RED));
+        // o_lips.forEach((ptIdx) => paintModelPt(landmarks[ptIdx], RED));
+        // anchors.forEach((ptIdx) => paintModelPt(landmarks[ptIdx], "#4288b5"));
       });
+
+      ctx.restore();
 
       return () => {
         cancelAnimationFrame(requestId);
       };
     };
     render();
-  }, [canvasRef, videoRef, model, paused]);
+  }, [canvasRef, videoRef, facemeshModel, paused]);
 
   return (
     <div className="flex w-full">
-      <div className="flex flex-col w-20 h-screen px-3 pt-6 space-y-4 bg-blue-100">
-        {["✍️", "👉", "❌", "➕"].map((icon, idx) => {
-          return (
-            <button
-              onClick={() => setCurrentTool(icon)}
-              className={`flex h-12 px-2 text-center text-white border border-black rounded-lg ${
-                icon === currentTool ? "bg-gray-400" : ""
-              }`}
-            >
-              <div className={`mx-auto mt-2 text-white`}>{icon}</div>
-            </button>
-          );
-        })}
-      </div>
       <div className="flex flex-col w-full p-2">
         <div className="flex w-full">
+          <div className="flex flex-col w-20 h-full px-3 pt-6 space-y-4 bg-blue-100">
+            {["✍️", "👉", "❌", "➕"].map((icon, idx) => {
+              return (
+                <button
+                  onClick={() => setCurrentTool(icon)}
+                  className={`flex h-12 px-2 text-center text-white border border-black rounded-lg ${
+                    icon === currentTool ? "bg-gray-400" : ""
+                  }`}
+                >
+                  <div className={`mx-auto mt-2 text-white`}>{icon}</div>
+                </button>
+              );
+            })}
+          </div>
           <div className="w-1/2 bg-gray-100">
             {videoRef.current && (
               <canvas
                 style={{
-                  // left:
-                  //   videoRef.current?.getBoundingClientRect().left +
-                  //   videoRef.current?.getBoundingClientRect().width / 2 +
-                  //   "px", //"25%",
                   position: "absolute",
                   height: videoRef.current?.videoHeight + "px",
                   width: videoRef.current?.videoWidth + "px",
-                  //WebkitTransform: "translate3d(-50%, 0, 0) scaleX(-1)",
-                  //transform: "translate3d(-50%, 0, 0) scaleX(-1)",
                 }}
                 className="bg-green-200"
                 ref={canvasRef}
@@ -280,13 +449,11 @@ function Main() {
               />
             )}
             <video
+              onLoadedMetadata={() => setIsVideoReady(true)}
               ref={videoRef}
               style={{
                 width: "100%",
                 height: "auto",
-                // position: "fixed",
-                //transform: "scaleX(-1)",
-                // WebkitTransform: "scaleX(-1)",
                 visibility: "hidden",
               }}
               id="videoElement"
@@ -301,6 +468,20 @@ function Main() {
               should be displayed here. Please check your browser or permissions
               in order to turn on video.
             </video>
+          </div>
+          <div className="flex flex-col w-16 h-full px-1 pt-6 space-y-2 bg-gray-300">
+            {["✍️", "👉", "❌", "➕"].map((icon, idx) => {
+              return (
+                <button
+                  onClick={() => setCurrentTool(icon)}
+                  className={`flex h-12 px-2 w-full text-center text-white border border-black rounded-lg ${
+                    icon === currentTool ? "bg-gray-400" : ""
+                  }`}
+                >
+                  <div className={`mx-auto mt-2 text-white`}>{icon}</div>
+                </button>
+              );
+            })}
           </div>
           <div className="w-1/2 bg-gray-100">
             {canvasRef.current && (
@@ -344,11 +525,11 @@ function Main() {
           </button>
         </div>
 
-        <div className="flex w-full h-32 p-2 mt-2 bg-gray-100 rounded-lg"></div>
+        <div ref={videoTimelineRef} className="w-full p-2 mt-2"></div>
 
-        <div className="flex w-full h-32 mt-2 bg-gray-100">
+        {/* <div className="flex w-full h-32 mt-2 bg-gray-100">
           <div className="w-full p-2 bg-gray-200 border rounded-lg ">aa</div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
