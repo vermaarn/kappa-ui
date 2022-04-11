@@ -18,7 +18,38 @@ import {
   MediaPipeFaceMesh,
 } from "@tensorflow-models/face-landmarks-detection/dist/mediapipe-facemesh";
 import "@tensorflow/tfjs-backend-webgl";
-import { Timeline, DataSet, TimelineOptions } from "vis-timeline/standalone";
+import {
+  Timeline,
+  DataSet,
+  TimelineOptions,
+  TimelineOptionsItemCallbackFunction,
+} from "vis-timeline/standalone";
+
+type LandmarkGroupType =
+  | "nose"
+  | "l_brow"
+  | "r_brow"
+  | "l_eye"
+  | "r_eye"
+  | "i_lips"
+  | "o_lips";
+
+interface ITimeBlock {
+  id?: number | string;
+  content: string;
+  editable: boolean;
+  start: number;
+  end?: number;
+  group: number;
+  neutralId?: string;
+}
+
+interface IRecordedTimeBlock {
+  id?: number | string;
+  neutralPoseTime: number;
+  start: number;
+  end?: number;
+}
 
 function Main() {
   const NUM_KEYPOINTS = 468;
@@ -27,66 +58,148 @@ function Main() {
   const RED = "#FF2C35";
   const roundTime = 32 * 1000;
   const MAX_FACES = 1;
+  const NEUTRAL_LANDMARK_ICON = "  😐  ";
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const blenshapeVideoRef = useRef<HTMLVideoElement>(null);
   const [inputVideo, setInputVideo] = useState("");
   const [paused, setPaused] = useState(true);
-  const [currentTool, setCurrentTool] = useState("✍️");
+  const [currentTool, setCurrentTool] = useState("👉");
+  const [currentRefTool, setCurrentRefTool] = useState("Q");
   const [facemeshModel, setFacemeshModel] = useState<FaceMesh>();
   const videoTimelineRef = useRef<HTMLDivElement>(null);
   const [isVideoReady, setIsVideoReady] = useState(false);
+  const [selectedTimeBlocks, setSelectedTimeBlocks] = useState<ITimeBlock[]>();
+  const [timelineBlocks, setTimelineBlocks] =
+    useState<DataSet<ITimeBlock, "id">>();
+  
+  const LANDMARK_GROUPS = [
+    "nose",
+    "l_brow",
+    "r_brow",
+    "l_eye",
+    "r_eye",
+    "i_lips",
+    "o_lips",
+  ];
 
-  const onRenderClick = useCallback(() => {
+  // save file on render click
+  const onRenderClick = useCallback(async () => {
+    if (!timelineBlocks) return;
+
+    const timelineBlock = timelineBlocks.map((item) => {
+      const neutralBlock = timelineBlocks.get(item.neutralId);
+      const saveBlock = [
+        LANDMARK_GROUPS[item.group],
+        new Date(neutralBlock.start).getTime(),
+        new Date(item.start).getTime(),
+        new Date(item.end).getTime(),
+      ];
+      if (item.content === NEUTRAL_LANDMARK_ICON) {
+        return null;
+      }
+      return saveBlock;
+    });
+    const renderTimeline = timelineBlock.filter((b) => b != null);
+    const csvArr = renderTimeline.map((e) => e.join(",")).join("\n");
+    const csvContent = "group,neutral_time,start,end\n" + csvArr;
+
+    const link = document.createElement("a");
+    link.download = "KAPPA_" + new Date().getTime() + ".csv";
+    link.href =
+      "data:text/plain;charset=utf-8," + encodeURIComponent(csvContent);
+    document.body.appendChild(link);
+    link.click();
+
+    console.log("RENDERING", renderTimeline);
+
     // {
     //   "nose": [ {0,60, neutral pose}, {30, 60, nueral} ],
     // },
-  }, []);
+  }, [timelineBlocks]);
 
+  useEffect(() => {
+    console.log(selectedTimeBlocks);
+  }, [selectedTimeBlocks]);
+
+  useEffect(() => {
+    if (selectedTimeBlocks && videoRef.current) {
+      const video = videoRef.current;
+
+      const minTimes = selectedTimeBlocks.map((b) => b.start);
+      const newStart = Math.min(...minTimes) / 100;
+      if (isFinite(newStart)) {
+        video.currentTime = newStart;
+      }
+    }
+  }, [selectedTimeBlocks, videoRef]);
+
+  // Set up the timeline
   useEffect(() => {
     const container = videoTimelineRef.current;
     const video = videoRef.current;
     if (!container || !video || !isVideoReady) return;
 
     // create a DataSet with items
-    const items = new DataSet([
-      {
-        id: 1,
-        content: "Editable",
-        editable: true,
-        start: 0,
-        end: 23,
-        group: 1,
-      },
-      {
-        id: 2,
-        content: "Editable",
-        editable: true,
-        start: 23,
-        end: 27,
-        group: 2,
-      },
-      {
-        id: 3,
-        content: "Timeline",
-        editable: false,
-        start: 10,
-        end: 30,
-        group: 2,
-        color: "#0f0f0f",
-      },
-    ]);
+    const items = new DataSet<ITimeBlock>([]);
+    setTimelineBlocks(items);
 
-    const groups = new DataSet(
-      ["nose", "l_brow", "r_brow", "l_eye", "r_eye", "i_lips", "o_lips"].map(
-        (name, idx) => ({ id: idx, content: name, value: idx + 1 })
-      )
-    );
+    const groups = [
+      "nose",
+      "l_brow",
+      "r_brow",
+      "l_eye",
+      "r_eye",
+      "i_lips",
+      "o_lips",
+    ].map((name, idx) => ({
+      id: idx,
+      content: name,
+      title: name,
+      value: idx + 1,
+    }));
+
+    const videoStart = 0;
+    const videoEnd = video.duration * 1000;
+    const defaultItemBlockTime = 5;
+
+    const onAddItem: TimelineOptionsItemCallbackFunction = (item, callback) => {
+      if (!item.group) return;
+      const neutralLandmarkId = new Date().getTime()
+
+      // create new item with some duration
+      const startTime = new Date(item.start).getTime();
+      const imageEl = document.createElement("img");
+      imageEl.src =
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Sparkline_dowjones_new.svg/1280px-Sparkline_dowjones_new.svg.png";
+      imageEl.className = "flex h-4";
+
+      const customItem = {
+        ...item,
+        content: "", //'<div style="height:6px; width:6px;" >' + imageEl.outerHTML + "</div>",
+        end: startTime + defaultItemBlockTime,
+        neutralId: neutralLandmarkId
+      };
+
+      callback(customItem);
+
+      // Add neutral landmark to given timeslot
+      const neutralLandmark = {
+        id: neutralLandmarkId,
+        content: NEUTRAL_LANDMARK_ICON,
+        editable: true,
+        start: startTime + Math.floor(defaultItemBlockTime / 2),
+        group: item.group as number,
+      };
+      items.add(neutralLandmark);
+
+      // add item to the given timelock
+    };
 
     const options: TimelineOptions = {
-      min: 0,
-      max: video.duration,
+      min: videoStart,
+      max: videoEnd,
       multiselect: true,
       editable: {
         add: true,
@@ -95,14 +208,75 @@ function Main() {
         updateTime: true,
         overrideItems: false,
       },
+      onAdd: onAddItem,
     };
 
     const timeline = new Timeline(container, items, groups, options);
-    timeline.setWindow(0, video.duration, { animation: false });
+
+    items.add([
+      {
+        id: "asdsada",
+        content: "",
+        editable: true,
+        start: 0,
+        end: 23,
+        group: 1,
+        neutralId: "sadsadasdq2",
+      },
+      {
+        id: "sadsadasdq2",
+        content: NEUTRAL_LANDMARK_ICON,
+        editable: true,
+        start: 12,
+        group: 1,
+      },
+      // {
+      //   id: 3,
+      //   content: "",
+      //   editable: false,
+      //   start: 10,
+      //   end: 30,
+      //   group: 2,
+      // },
+    ]);
+
+    timeline.on("select", (e) => {
+      if (e.items) {
+        const itemGroup = e.items.reduce((prevArr: any[], itemId: number) => {
+          const item = items.get(itemId);
+          if (item.content !== NEUTRAL_LANDMARK_ICON) {
+            return [item, ...prevArr];
+          }
+          return prevArr;
+        }, []);
+
+        setSelectedTimeBlocks(itemGroup);
+      }
+    });
+
+    timeline.on("doubleClick", (e) => {
+      if (e.item) {
+        const item = items.get(e.item as number | string);
+        if (!item.end) return;
+        const itemStart = new Date(item.start).getTime();
+        const itemEnd = new Date(item.end).getTime();
+
+        const neutralLandmark = {
+          content: NEUTRAL_LANDMARK_ICON,
+          editable: true,
+          start: itemStart + Math.floor((itemEnd - itemStart) / 2),
+          group: e.group,
+        };
+
+        items.add(neutralLandmark);
+      }
+    });
+    timeline.setWindow(videoStart, videoEnd, { animation: false });
+
     const currVideoTimeId = timeline.addCustomTime(0);
     video.addEventListener("timeupdate", (e) => {
       if (!video.paused) {
-        const time = e.timeStamp / 1000;
+        const time = e.timeStamp / 100;
         timeline.setCustomTime(time, currVideoTimeId);
       }
     });
@@ -136,8 +310,9 @@ function Main() {
     setPaused((p) => !p);
   };
 
-  // setting tensorflow to use wasm backend
+  // adding media pipe
   useEffect(() => {
+    if (!isVideoReady) return;
     const faceMesh = new FaceMesh({
       locateFile: (file) => {
         return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
@@ -151,7 +326,24 @@ function Main() {
     };
     faceMesh.setOptions(options);
     setFacemeshModel(faceMesh);
-  }, []);
+  }, [isVideoReady]);
+
+  // save video landmarks
+  useEffect(() => {
+    if (!facemeshModel || !isVideoReady || !videoRef.current) return;
+
+    // see 10 frames / section
+    let isComplete = false;
+    const videoEl = videoRef.current;
+    const videoDurationMs = videoEl.duration * 1000;
+    const intervalDuration = 100;
+
+    // step 1 break video into 100ms interval
+    const intervalCount = Math.round(videoDurationMs / intervalDuration);
+    Array.from({ length: intervalCount }, async (_, i) => {
+      const interval = i * intervalDuration;
+    });
+  }, [facemeshModel, isVideoReady, videoRef]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -231,9 +423,6 @@ function Main() {
       anchors: markers.additional_anchors,
     };
 
-    const { nose, l_brow, r_brow, l_eye, r_eye, i_lips, o_lips, anchors } =
-      grouped_marker;
-
     let selectedMarkers: { [name: string]: boolean } = {
       nose: false,
       l_brow: false,
@@ -245,7 +434,7 @@ function Main() {
     };
 
     canvas.addEventListener("mousemove", (e) => {
-      if (flag) {
+      if (flag && currentTool === "✍️") {
         prevX = currX;
         prevY = currY;
         currX = e.clientX - canvas.offsetLeft;
@@ -323,7 +512,6 @@ function Main() {
     let predArr: NormalizedLandmarkList[] = [];
     const resultListener: ResultsListener = (res) => {
       if (!paused) {
-        console.log("SS", selectedMarkers);
         predArr = res.multiFaceLandmarks as NormalizedLandmarkList[];
         requestId = requestAnimationFrame(render);
       }
@@ -422,7 +610,7 @@ function Main() {
       <div className="flex flex-col w-full p-2">
         <div className="flex w-full">
           <div className="flex flex-col w-20 h-full px-3 pt-6 space-y-4 bg-blue-100">
-            {["✍️", "👉", "❌", "➕"].map((icon, idx) => {
+            {["👉", "✍️", "❌", "➕"].map((icon, idx) => {
               return (
                 <button
                   onClick={() => setCurrentTool(icon)}
@@ -469,22 +657,23 @@ function Main() {
               in order to turn on video.
             </video>
           </div>
-          <div className="flex flex-col w-16 h-full px-1 pt-6 space-y-2 bg-gray-300">
-            {["✍️", "👉", "❌", "➕"].map((icon, idx) => {
+          <div className="flex flex-col w-16 h-full px-1 pt-6 space-y-2 bg-gray-100">
+            {["B", "Q", "R"].map((icon, idx) => {
               return (
                 <button
-                  onClick={() => setCurrentTool(icon)}
-                  className={`flex h-12 px-2 w-full text-center text-white border border-black rounded-lg ${
-                    icon === currentTool ? "bg-gray-400" : ""
+                  onClick={() => setCurrentRefTool(icon)}
+                  className={`flex h-12 px-2 w-full text-center text-black border border-black rounded-lg ${
+                    icon === currentRefTool ? "bg-gray-400" : ""
                   }`}
                 >
-                  <div className={`mx-auto mt-2 text-white`}>{icon}</div>
+                  <div className={`mx-auto mt-2 text-black`}>{icon}</div>
                 </button>
               );
             })}
           </div>
           <div className="w-1/2 bg-gray-100">
-            {canvasRef.current && (
+            {!canvasRef.current && <div className="w-full h-full" />}
+            {canvasRef.current && isVideoReady && currentRefTool === "B" && (
               <video
                 ref={blenshapeVideoRef}
                 className="px-2 mx-auto bg-blue-200"
@@ -503,6 +692,15 @@ function Main() {
                 permissions in order to turn on video.
               </video>
             )}
+            {currentRefTool === "Q" && canvasRef.current && isVideoReady && (
+              <canvas
+                className="bg-white"
+                style={{
+                  height: canvasRef.current.height + "px",
+                  width: "100%",
+                }}
+              ></canvas>
+            )}
           </div>
         </div>
         <div className="flex w-full mt-2 bg-gray-100 ">
@@ -520,7 +718,10 @@ function Main() {
           >
             {paused ? "Play" : "Pause"}
           </button>
-          <button className={`w-64 h-12 bg-orange-200 rounded-lg`}>
+          <button
+            onClick={onRenderClick}
+            className={`w-64 h-12 bg-orange-200 rounded-lg`}
+          >
             Render
           </button>
         </div>
