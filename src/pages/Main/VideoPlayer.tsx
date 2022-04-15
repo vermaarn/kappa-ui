@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import Canvas from "../../components/Canvas"
+import Canvas from "../../components/Canvas";
 
 function VideoPlayer() {
   const [inputVideo, setInputVideo] = useState("");
@@ -26,26 +26,36 @@ function VideoPlayer() {
   };
 
   const draw = (ctx: CanvasRenderingContext2D, frameCount: number) => {
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.fillStyle = "#000000";
-    ctx.beginPath();
-    ctx.arc(50, 100, 20 * Math.sin(frameCount * 0.05) ** 2, 0, 2 * Math.PI);
-    ctx.fill();
+    const video = videoRef.current;
+    const ratio = getPixelRatio(ctx);
+    const width = parseFloat(
+      getComputedStyle(video).getPropertyValue("width").slice(0, -2)
+    );
+    const height = parseFloat(
+      getComputedStyle(video).getPropertyValue("height").slice(0, -2)
+    );
+
+    ctx.canvas.width = width * ratio;
+    ctx.canvas.height = height * ratio;
+
+    ctx.drawImage(
+      video,
+      0,
+      0,
+      video.videoWidth,
+      video.videoHeight,
+      0,
+      0,
+      ctx.canvas.width,
+      ctx.canvas.height
+    );
   };
 
   return (
     <div className="bg-gray-100">
-      <Canvas draw={draw} />
-      {/* <canvas
-        style={{
-          position: "absolute",
-          height: videoRef.current?.videoHeight + "px",
-          width: videoRef.current?.videoWidth + "px",
-        }}
-        className="bg-green-200"
-        ref={canvasRef}
-      /> */}
-
+      <div style={{ position: "absolute" }}>
+        <Canvas draw={draw} />
+      </div>
       <video
         onLoadedMetadata={() => setIsVideoReady(true)}
         ref={videoRef}
@@ -85,5 +95,18 @@ function VideoPlayer() {
     </div>
   );
 }
+
+const getPixelRatio = (context: any) => {
+  const backingStore =
+    context.backingStorePixelRatio ||
+    context.webkitBackingStorePixelRatio ||
+    context.mozBackingStorePixelRatio ||
+    context.msBackingStorePixelRatio ||
+    context.oBackingStorePixelRatio ||
+    context.backingStorePixelRatio ||
+    1;
+
+  return (window.devicePixelRatio || 1) / backingStore;
+};
 
 export default VideoPlayer;

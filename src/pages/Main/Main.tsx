@@ -610,7 +610,7 @@ function Main() {
     <div className="flex w-full">
       <div className="flex flex-col w-full p-2">
         <div className="flex w-full">
-          <div className="flex flex-col w-20 h-full px-3 pt-6 space-y-4 bg-blue-100">
+          {/* <div className="flex flex-col w-20 h-full px-3 pt-6 space-y-4 bg-blue-100">
             {["👉", "✍️", "❌", "➕"].map((icon, idx) => {
               return (
                 <button
@@ -623,44 +623,10 @@ function Main() {
                 </button>
               );
             })}
-          </div>
+          </div> */}
           <div className="w-1/2">
             <VideoPlayer />
           </div>
-          {/* <div className="w-1/2 bg-gray-100">
-            {videoRef.current && (
-              <canvas
-                style={{
-                  position: "absolute",
-                  height: videoRef.current?.videoHeight + "px",
-                  width: videoRef.current?.videoWidth + "px",
-                }}
-                className="bg-green-200"
-                ref={canvasRef}
-                onMouseMove={() => {}}
-              />
-            )}
-            <video
-              onLoadedMetadata={() => setIsVideoReady(true)}
-              ref={videoRef}
-              style={{
-                width: "100%",
-                height: "auto",
-                visibility: "hidden",
-              }}
-              id="videoElement"
-              src={
-                inputVideo
-                  ? "allowfile:///" + inputVideo
-                  : "allowfile:///" + "/home/arnav/Videos/video-1647646130.mp4"
-              }
-              muted={true}
-              controls
-            >
-              should be displayed here. Please check your browser or permissions
-              in order to turn on video.
-            </video>
-          </div> */}
           <div className="flex flex-col w-16 h-full px-1 pt-6 space-y-2 bg-gray-100">
             {["B", "Q", "R"].map((icon, idx) => {
               return (
@@ -707,7 +673,7 @@ function Main() {
             )}
           </div>
         </div>
-        <div className="flex w-full mt-2 bg-gray-100 ">
+        {/* <div className="flex w-full mt-2 bg-gray-100 ">
           <input
             type="file"
             accept="video/*"
@@ -728,13 +694,9 @@ function Main() {
           >
             Render
           </button>
-        </div>
+        </div> */}
 
         <div ref={videoTimelineRef} className="w-full p-2 mt-2"></div>
-
-        {/* <div className="flex w-full h-32 mt-2 bg-gray-100">
-          <div className="w-full p-2 bg-gray-200 border rounded-lg ">aa</div>
-        </div> */}
       </div>
     </div>
   );
