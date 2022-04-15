@@ -24,6 +24,7 @@ import {
   TimelineOptions,
   TimelineOptionsItemCallbackFunction,
 } from "vis-timeline/standalone";
+import VideoPlayer from "./VideoPlayer";
 
 type LandmarkGroupType =
   | "nose"
@@ -73,7 +74,7 @@ function Main() {
   const [selectedTimeBlocks, setSelectedTimeBlocks] = useState<ITimeBlock[]>();
   const [timelineBlocks, setTimelineBlocks] =
     useState<DataSet<ITimeBlock, "id">>();
-  
+
   const LANDMARK_GROUPS = [
     "nose",
     "l_brow",
@@ -166,7 +167,7 @@ function Main() {
 
     const onAddItem: TimelineOptionsItemCallbackFunction = (item, callback) => {
       if (!item.group) return;
-      const neutralLandmarkId = new Date().getTime()
+      const neutralLandmarkId = new Date().getTime();
 
       // create new item with some duration
       const startTime = new Date(item.start).getTime();
@@ -179,7 +180,7 @@ function Main() {
         ...item,
         content: "", //'<div style="height:6px; width:6px;" >' + imageEl.outerHTML + "</div>",
         end: startTime + defaultItemBlockTime,
-        neutralId: neutralLandmarkId
+        neutralId: neutralLandmarkId,
       };
 
       callback(customItem);
@@ -623,7 +624,10 @@ function Main() {
               );
             })}
           </div>
-          <div className="w-1/2 bg-gray-100">
+          <div className="w-1/2">
+            <VideoPlayer />
+          </div>
+          {/* <div className="w-1/2 bg-gray-100">
             {videoRef.current && (
               <canvas
                 style={{
@@ -656,7 +660,7 @@ function Main() {
               should be displayed here. Please check your browser or permissions
               in order to turn on video.
             </video>
-          </div>
+          </div> */}
           <div className="flex flex-col w-16 h-full px-1 pt-6 space-y-2 bg-gray-100">
             {["B", "Q", "R"].map((icon, idx) => {
               return (
