@@ -27,7 +27,21 @@
  */
 
 // import './index.css';
-import './styles/index.css'
-import './app';
+import "./styles/index.css";
+import "./app";
+import { IpcRendererEvent } from "electron";
 
-console.log('👋 This message is being logged by "renderer.js", included via webpack');
+console.log(
+  '👋 This message is being logged by "renderer.js", included via webpack'
+);
+
+console.log("AAA", (window as any).electronAPI)
+
+// (window as any).electronAPI.handleCounter(
+//   (event: IpcRendererEvent, value: number) => {
+//     const oldValue = Number(50);
+//     const newValue = oldValue + value;
+//     // counter.innerText = newValue;
+//     event.sender.send("counter-value", newValue);
+//   }
+// );

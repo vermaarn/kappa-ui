@@ -1,3 +1,4 @@
+import { IpcRendererEvent } from "electron";
 import React, { useEffect, useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
 
@@ -5,16 +6,18 @@ function VideoPlayer() {
   const [inputVideo, setInputVideo] = useState("");
   const [paused, setPaused] = useState(true);
   const [isVideoReady, setIsVideoReady] = useState(false);
-  const [context, setContext] = React.useState<CanvasRenderingContext2D | null>(
-    null
-  );
-
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
+  
   const onPlayPauseClick: React.MouseEventHandler<
     HTMLButtonElement
   > = async () => {
+    (window as any).electronAPI.handleCounter((event: IpcRendererEvent, value: number) => {
+      const oldValue = Number(50);
+      const newValue = oldValue + value;
+      // counter.innerText = newValue;
+      event.sender.send("counter-value", newValue);
+    });
+
     const videoEl = videoRef.current;
     if (!videoEl) return;
     if (paused) {
@@ -52,16 +55,22 @@ function VideoPlayer() {
   };
 
   return (
-    <div className="bg-gray-100">
-      <div style={{ position: "absolute" }}>
+    <div className="bg-black">
+      <div
+        style={{
+          position: "absolute",
+          left: "5%",
+        }}
+      >
         <Canvas draw={draw} />
       </div>
       <video
         onLoadedMetadata={() => setIsVideoReady(true)}
         ref={videoRef}
         style={{
-          width: "100%",
-          height: "auto",
+          width: "auto",
+          maxWidth: "100%",
+          maxHeight: "400px",
           visibility: "hidden",
         }}
         id="videoElement"
@@ -80,12 +89,12 @@ function VideoPlayer() {
         <input
           type="file"
           accept="video/*"
-          className="w-1/2 p-2 bg-gray-200 rounded-lg cursor-pointer"
+          className="w-full p-2 bg-gray-200 rounded-lg cursor-pointer"
           onChange={(e) => setInputVideo(e.currentTarget.files[0].path)}
         />
         <button
-          className={`w-full h-12 ${
-            paused ? "bg-green-200" : "bg-yellow-200"
+          className={`h-12 w-24 ${
+            paused ? "bg-green-200" : "bg-yellow-300"
           } rounded-lg`}
           onClick={onPlayPauseClick}
         >

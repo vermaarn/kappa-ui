@@ -91,3 +91,6 @@ out/
 index.css
 
 demo/
+python_scripts/env
+
+dist/
