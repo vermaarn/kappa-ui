@@ -25,6 +25,7 @@ import {
   TimelineOptionsItemCallbackFunction,
 } from "vis-timeline/standalone";
 import VideoPlayer from "./VideoPlayer";
+import VideoTimeline from "./VideoTimeline";
 
 type LandmarkGroupType =
   | "nose"
@@ -696,7 +697,8 @@ function Main() {
           </button>
         </div> */}
 
-        <div ref={videoTimelineRef} className="w-full p-2 mt-2"></div>
+        {/* <div ref={videoTimelineRef} className="w-full p-2 mt-2"></div> */}
+        <VideoTimeline />
       </div>
     </div>
   );

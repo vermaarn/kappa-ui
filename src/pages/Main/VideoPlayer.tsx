@@ -2,21 +2,25 @@ import { IpcRendererEvent } from "electron";
 import React, { useEffect, useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
 
+type PrincipalMotionType = "x" | "y" | "w";
+
 function VideoPlayer() {
   const [inputVideo, setInputVideo] = useState("");
   const [paused, setPaused] = useState(true);
   const [isVideoReady, setIsVideoReady] = useState(false);
+  const [selectPrincipalMotion, setSelectPrincipalMotion] = useState([]);
+  const [principalMotion, setPrincipalMotion] = useState<PrincipalMotionType>();
+  const pMotionRef = useRef<HTMLDivElement>(null);
+
   const videoRef = useRef<HTMLVideoElement>(null);
-  
+
   const onPlayPauseClick: React.MouseEventHandler<
     HTMLButtonElement
   > = async () => {
-    (window as any).electronAPI.handleCounter((event: IpcRendererEvent, value: number) => {
-      const oldValue = Number(50);
-      const newValue = oldValue + value;
-      // counter.innerText = newValue;
-      event.sender.send("counter-value", newValue);
-    });
+    const landmarks = await (window as any).electronAPI.processLandmarks(
+      inputVideo
+    );
+    console.log(landmarks);
 
     const videoEl = videoRef.current;
     if (!videoEl) return;
@@ -54,16 +58,47 @@ function VideoPlayer() {
     );
   };
 
+  const onCanvasClick: React.MouseEventHandler<HTMLDivElement> = (e) => {
+    setSelectPrincipalMotion([
+      e.clientX - pMotionRef.current.offsetWidth / 2,
+      e.clientY - pMotionRef.current.offsetHeight / 2,
+    ]);
+  };
+
+  const onCanvasMouseUp = () => {
+    setSelectPrincipalMotion([]);
+  };
+
   return (
     <div className="bg-black">
       <div
+        onClick={onCanvasClick}
         style={{
           position: "absolute",
-          left: "5%",
         }}
+        className="z-10"
       >
         <Canvas draw={draw} />
       </div>
+
+      {selectPrincipalMotion && (
+        <div
+          style={{
+            left: selectPrincipalMotion[0],
+            top: selectPrincipalMotion[1],
+            visibility:
+              selectPrincipalMotion.length === 0 ? "hidden" : "visible",
+          }}
+          onClick={onCanvasMouseUp}
+          ref={pMotionRef}
+          className={`absolute flex flex-wrap z-20 w-24 h-24 bg-gray-200 rounded-full cursor:pointer`}
+        >
+          {["x", "y", "w"].map((el) => (
+            <div className="w-12 h-12 bg-red-200 hover:bg-red-400">{el} </div>
+          ))}
+        </div>
+      )}
+
       <video
         onLoadedMetadata={() => setIsVideoReady(true)}
         ref={videoRef}
@@ -93,12 +128,12 @@ function VideoPlayer() {
           onChange={(e) => setInputVideo(e.currentTarget.files[0].path)}
         />
         <button
-          className={`h-12 w-24 ${
-            paused ? "bg-green-200" : "bg-yellow-300"
+          className={`h-12 w-20 text-2xl ${
+            paused ? "bg-green-200" : "bg-yellow-100"
           } rounded-lg`}
           onClick={onPlayPauseClick}
         >
-          {paused ? "Play" : "Pause"}
+          {paused ? "▶️" : "⏸"}
         </button>
       </div>
     </div>

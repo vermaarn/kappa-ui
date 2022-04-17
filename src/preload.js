@@ -3,10 +3,9 @@ const { contextBridge, ipcRenderer } = require("electron");
 // type IListener = (event: IpcRendererEvent, ...args: any[]) => void;
 
 contextBridge.exposeInMainWorld("electronAPI", {
-  handleCounter: (callback) => {
-    ipcRenderer.on("update-counter", callback);
-  },
+  processLandmarks: (file) => ipcRenderer.invoke("process:landmarks", file),
 });
+
 
 // window.addEventListener("DOMContentLoaded", () => {
 //   const replaceText = (selector: string, text: string) => {
