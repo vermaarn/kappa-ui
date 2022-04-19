@@ -43,13 +43,16 @@ function interceptFileHandler(request: any, callback: any) {
 
 async function handleProcessLandmarks(_event: Electron.IpcMainInvokeEvent, ...args: any[]) {
   const pythonFile = "/python_scripts/hello.py";
+  const pythonEnv = "/python_scripts/env/bin/python3.9"
+
   const base = path.join(__dirname, "../..");
   const pythonScriptPath = path.join(base, pythonFile);
+  const pythonEnvPath = path.join(base, pythonEnv)
 
   const filePath = args[0]
   console.log(filePath, 'A')
 
-  const child = execFile("python3", [pythonScriptPath, filePath]);
+  const child = execFile(pythonEnvPath, [pythonScriptPath, filePath]);
 
   let data = "";
   for await (const chunk of child.stdout) {

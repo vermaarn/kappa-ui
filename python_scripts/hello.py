@@ -3,7 +3,7 @@ from sys import argv
 
 def calc(num):
     """based on the input text, return the operation result"""
-    return num + "1122"
+    return num + "hello from python"
 
 
 if __name__ == "__main__":

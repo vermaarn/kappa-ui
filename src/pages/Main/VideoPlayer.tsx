@@ -18,7 +18,7 @@ function VideoPlayer() {
     HTMLButtonElement
   > = async () => {
     const landmarks = await (window as any).electronAPI.processLandmarks(
-      inputVideo
+      "1"
     );
     console.log(landmarks);
 
