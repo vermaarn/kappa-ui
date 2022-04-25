@@ -26,6 +26,7 @@ import {
 } from "vis-timeline/standalone";
 import VideoPlayer from "./VideoPlayer";
 import VideoTimeline from "./VideoTimeline";
+import MotionView from "./MotionView";
 
 type LandmarkGroupType =
   | "nose"
@@ -425,7 +426,7 @@ function Main() {
       anchors: markers.additional_anchors,
     };
 
-    let selectedMarkers: { [name: string]: boolean } = {
+    const selectedMarkers: { [name: string]: boolean } = {
       nose: false,
       l_brow: false,
       r_brow: false,
@@ -611,20 +612,6 @@ function Main() {
     <div className="flex w-full">
       <div className="flex flex-col w-full p-2">
         <div className="flex w-full">
-          {/* <div className="flex flex-col w-20 h-full px-3 pt-6 space-y-4 bg-blue-100">
-            {["👉", "✍️", "❌", "➕"].map((icon, idx) => {
-              return (
-                <button
-                  onClick={() => setCurrentTool(icon)}
-                  className={`flex h-12 px-2 text-center text-white border border-black rounded-lg ${
-                    icon === currentTool ? "bg-gray-400" : ""
-                  }`}
-                >
-                  <div className={`mx-auto mt-2 text-white`}>{icon}</div>
-                </button>
-              );
-            })}
-          </div> */}
           <div className="w-1/2">
             <VideoPlayer />
           </div>
@@ -633,9 +620,8 @@ function Main() {
               return (
                 <button
                   onClick={() => setCurrentRefTool(icon)}
-                  className={`flex h-12 px-2 w-full text-center text-black border border-black rounded-lg ${
-                    icon === currentRefTool ? "bg-gray-400" : ""
-                  }`}
+                  className={`flex h-12 px-2 w-full text-center text-black border border-black rounded-lg ${icon === currentRefTool ? "bg-gray-400" : ""
+                    }`}
                 >
                   <div className={`mx-auto mt-2 text-black`}>{icon}</div>
                 </button>
@@ -643,61 +629,10 @@ function Main() {
             })}
           </div>
           <div className="w-1/2 bg-gray-100">
-            {!canvasRef.current && <div className="w-full h-full" />}
-            {canvasRef.current && isVideoReady && currentRefTool === "B" && (
-              <video
-                ref={blenshapeVideoRef}
-                className="px-2 mx-auto bg-blue-200"
-                style={{
-                  height: canvasRef.current.height + "px",
-                  width: "100%",
-                }}
-                src={
-                  "allowfile:///" +
-                  "/home/arnav/Desktop/csc2521/demo-video/metahuman.mp4"
-                }
-                muted={true}
-                // controls
-              >
-                should be displayed here. Please check your browser or
-                permissions in order to turn on video.
-              </video>
-            )}
-            {currentRefTool === "Q" && canvasRef.current && isVideoReady && (
-              <canvas
-                className="bg-white"
-                style={{
-                  height: canvasRef.current.height + "px",
-                  width: "100%",
-                }}
-              ></canvas>
-            )}
+            <MotionView />
           </div>
         </div>
-        {/* <div className="flex w-full mt-2 bg-gray-100 ">
-          <input
-            type="file"
-            accept="video/*"
-            className="w-1/2 p-2 bg-gray-200 rounded-lg cursor-pointer"
-            onChange={(e) => setInputVideo(e.currentTarget.files[0].path)}
-          />
-          <button
-            className={`w-full h-12 ${
-              paused ? "bg-green-200" : "bg-yellow-200"
-            } rounded-lg`}
-            onClick={onPlayPauseClick}
-          >
-            {paused ? "Play" : "Pause"}
-          </button>
-          <button
-            onClick={onRenderClick}
-            className={`w-64 h-12 bg-orange-200 rounded-lg`}
-          >
-            Render
-          </button>
-        </div> */}
 
-        {/* <div ref={videoTimelineRef} className="w-full p-2 mt-2"></div> */}
         <VideoTimeline />
       </div>
     </div>

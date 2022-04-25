@@ -120,21 +120,20 @@ function VideoPlayer() {
         should be displayed here. Please check your browser or permissions in
         order to turn on video.
       </video>
-      <div className="flex w-full mt-2 bg-gray-100 ">
-        <input
-          type="file"
-          accept="video/*"
-          className="w-full p-2 bg-gray-200 rounded-lg cursor-pointer"
-          onChange={(e) => setInputVideo(e.currentTarget.files[0].path)}
-        />
+      <div className="flex w-full bg-gray-100 ">
         <button
-          className={`h-12 w-20 text-2xl ${
-            paused ? "bg-green-200" : "bg-yellow-100"
-          } rounded-lg`}
+          className={`text-2xl `}
           onClick={onPlayPauseClick}
         >
           {paused ? "▶️" : "⏸"}
         </button>
+        <input
+          type="file"
+          accept="video/*"
+          className="w-48 p-2 cursor-pointer"
+          onChange={(e) => setInputVideo(e.currentTarget.files[0].path)}
+        />
+
       </div>
     </div>
   );

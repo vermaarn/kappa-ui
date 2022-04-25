@@ -2,7 +2,13 @@ import React from 'react'
 
 function MotionView() {
   return (
-	<div>MotionView</div>
+    <canvas
+      className="bg-white"
+      style={{
+        height: "100%",
+        width: "100%",
+      }}
+    />
   )
 }
 
