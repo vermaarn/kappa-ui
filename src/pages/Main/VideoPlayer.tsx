@@ -4,12 +4,13 @@ import Canvas from "../../components/Canvas";
 
 type PrincipalMotionType = "x" | "y" | "w";
 
+const principalMotions: PrincipalMotionType[] = ["x", "y", "w"]
 function VideoPlayer() {
   const [inputVideo, setInputVideo] = useState("");
   const [paused, setPaused] = useState(true);
   const [isVideoReady, setIsVideoReady] = useState(false);
   const [selectPrincipalMotion, setSelectPrincipalMotion] = useState([]);
-  const [principalMotion, setPrincipalMotion] = useState<PrincipalMotionType>();
+  const [principalMotion, setPrincipalMotion] = useState<PrincipalMotionType>("x");
   const pMotionRef = useRef<HTMLDivElement>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -69,6 +70,10 @@ function VideoPlayer() {
     setSelectPrincipalMotion([]);
   };
 
+  const onPrincipalMotionClick = (pm: PrincipalMotionType) => {
+    setPrincipalMotion(pm)
+  }
+
   return (
     <div className="bg-black">
       <div
@@ -93,8 +98,14 @@ function VideoPlayer() {
           ref={pMotionRef}
           className={`absolute flex flex-wrap z-20 w-24 h-24 bg-gray-200 rounded-full cursor:pointer`}
         >
-          {["x", "y", "w"].map((el) => (
-            <div className="w-12 h-12 bg-red-200 hover:bg-red-400">{el} </div>
+          {principalMotions.map((el, idx) => (
+            <div style={{
+              borderTopLeftRadius: idx === 0 ? "100%" : "0",
+              borderTopRightRadius: idx === 1 ? "100%" : "0",
+              borderBottomLeftRadius: idx === 2 ? "100%" : "0"
+            }}
+              onClick={() => onPrincipalMotionClick(el)}
+              className={`content-center w-12 h-12 pt-2 text-xl text-center  cursor-pointer justify-self-center ${el === principalMotion ? "bg-red-400" : "bg-red-200 hover:bg-red-300"}`}>{el} </div>
           ))}
         </div>
       )}
@@ -127,10 +138,12 @@ function VideoPlayer() {
         >
           {paused ? "▶️" : "⏸"}
         </button>
+
+        <div className="w-full ml-2 bg-gray-300" />
         <input
           type="file"
           accept="video/*"
-          className="w-48 p-2 cursor-pointer"
+          className="w-8 p-2 cursor-pointer"
           onChange={(e) => setInputVideo(e.currentTarget.files[0].path)}
         />
 

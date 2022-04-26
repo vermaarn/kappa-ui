@@ -618,19 +618,6 @@ function Main() {
             <VideoPlayer />
           </div>
           <Toolbar toolSetter={setCurrentRefTool} />
-          {/* <div className="flex flex-col w-16 h-full px-1 pt-6 space-y-2 bg-gray-100">
-            {["B", "Q", "R"].map((icon, idx) => {
-              return (
-                <button
-                  onClick={() => setCurrentRefTool(icon)}
-                  className={`flex h-12 px-2 w-full text-center text-black border border-black rounded-lg ${icon === currentRefTool ? "bg-gray-400" : ""
-                    }`}
-                >
-                  <div className={`mx-auto mt-2 text-black`}>{icon}</div>
-                </button>
-              );
-            })}
-          </div> */}
           <div className="w-1/2 bg-gray-100">
             <MotionView />
           </div>

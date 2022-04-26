@@ -5,3 +5,7 @@ div.vis-readonly.vis-selected {
   border-color: red;
   color: white;
 }
+
+/* body > div > div > div.w-full.p-2.mt-2 > div > div.vis-panel.vis-top > div > .vis-text.vis-major.vis-even {
+  visability: hidden;
+} */

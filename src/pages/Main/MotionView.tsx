@@ -1,15 +1,14 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
+import * as csv from "d3-dsv"
+import Plotly from "plotly.js-dist"
 
 function MotionView() {
 
 
   return (
-    <canvas
-      className="bg-white"
-      style={{
-        height: "100%",
-        width: "100%",
-      }}
+    <div
+      id="myDiv"
+
     />
   )
 }
