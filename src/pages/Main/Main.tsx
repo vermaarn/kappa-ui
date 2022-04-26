@@ -24,9 +24,11 @@ import {
   TimelineOptions,
   TimelineOptionsItemCallbackFunction,
 } from "vis-timeline/standalone";
+
 import VideoPlayer from "./VideoPlayer";
 import VideoTimeline from "./VideoTimeline";
 import MotionView from "./MotionView";
+import Toolbar from "./Toolbar";
 
 type LandmarkGroupType =
   | "nose"
@@ -615,7 +617,8 @@ function Main() {
           <div className="w-1/2">
             <VideoPlayer />
           </div>
-          <div className="flex flex-col w-16 h-full px-1 pt-6 space-y-2 bg-gray-100">
+          <Toolbar toolSetter={setCurrentRefTool} />
+          {/* <div className="flex flex-col w-16 h-full px-1 pt-6 space-y-2 bg-gray-100">
             {["B", "Q", "R"].map((icon, idx) => {
               return (
                 <button
@@ -627,7 +630,7 @@ function Main() {
                 </button>
               );
             })}
-          </div>
+          </div> */}
           <div className="w-1/2 bg-gray-100">
             <MotionView />
           </div>

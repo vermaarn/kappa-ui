@@ -1,6 +1,8 @@
 import React from 'react'
 
 function MotionView() {
+
+
   return (
     <canvas
       className="bg-white"
