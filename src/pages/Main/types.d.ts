@@ -5,6 +5,4 @@ declare global {
   }
 }
 
-declare module 'plotly.js-dist'
-
 window.VideoFrame = window.VideoFrame || {};
