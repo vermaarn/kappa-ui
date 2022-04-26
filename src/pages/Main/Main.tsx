@@ -614,11 +614,11 @@ function Main() {
     <div className="flex w-full">
       <div className="flex flex-col w-full p-2">
         <div className="flex w-full">
-          <div className="w-1/2">
+          <div className="w-1/2 p-1 bg-gray-200">
             <VideoPlayer />
           </div>
           <Toolbar toolSetter={setCurrentRefTool} />
-          <div className="w-1/2 bg-gray-100">
+          <div className="w-1/2 h-full p-1 bg-gray-200">
             <MotionView />
           </div>
         </div>

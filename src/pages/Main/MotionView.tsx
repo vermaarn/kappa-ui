@@ -13,6 +13,8 @@ function MotionView() {
 
     const main = async () => {
       console.log(containerEl.clientHeight, containerEl.offsetWidth)
+      console.log(plotEl.clientHeight, plotEl.offsetWidth)
+
       const margin = { top: 10, right: 30, bottom: 30, left: 60 },
         width = containerEl.offsetWidth - margin.left - margin.right,
         height = containerEl.offsetHeight - margin.top - margin.bottom;
@@ -52,17 +54,19 @@ function MotionView() {
         .attr("fill", "none")
         .attr("stroke", "steelblue")
         .attr("stroke-width", 1.5)
-        .attr("d", d3.line(function (d, index, data) { return d.date.getFullYear() }, function (d, index, data) { return parseFloat(d.value) }))
+        .attr("d", d3.line(function (d, index, data) { return x(d.date) }, function (d, index, data) { return y(parseFloat(d.value)) }))
     }
 
-    main()
+    setTimeout(() => {
+      main()
+    }, 300)
 
   }, [plotRef, containerRef])
 
   return (
     <div ref={containerRef} className="w-full h-full">
       <div
-        className=""
+        className="w-full h-full"
         ref={plotRef}
       />
     </div>

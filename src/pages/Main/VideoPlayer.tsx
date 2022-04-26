@@ -134,7 +134,7 @@ function VideoPlayer() {
           order to turn on video.
         </video>
       </div>
-      <div className="flex w-full h-8 bg-gray-100 ">
+      <div className="flex w-full h-8 ">
         <button
           className={`text-2xl ml-1 h-4 w-4 text-center mt-1`}
           onClick={onPlayPauseClick}
