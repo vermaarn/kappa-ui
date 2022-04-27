@@ -6,3 +6,5 @@ declare global {
 }
 
 window.VideoFrame = window.VideoFrame || {};
+
+declare module 'plotly.js-dist';

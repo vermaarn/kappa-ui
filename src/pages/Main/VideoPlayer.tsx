@@ -1,7 +1,7 @@
 import { IpcRendererEvent } from "electron";
 import React, { useEffect, useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
-import { VscPlay, VscDebugPause } from "react-icons/vsc"
+import { VscPlay, VscDebugPause, VscFolderOpened } from "react-icons/vsc"
 
 type PrincipalMotionType = "x" | "y" | "w";
 
@@ -13,6 +13,7 @@ function VideoPlayer() {
   const [selectPrincipalMotion, setSelectPrincipalMotion] = useState([]);
   const [principalMotion, setPrincipalMotion] = useState<PrincipalMotionType>("x");
   const pMotionRef = useRef<HTMLDivElement>(null);
+  const [videoTimer, setVideoTimer] = useState(0)
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -76,12 +77,13 @@ function VideoPlayer() {
   }
 
   return (
-    <div className="">
-      <div className="px-auto wll">
+    <div className="h-full">
+      <div className="bg-black px-auto ">
         <div
           onClick={onCanvasClick}
           style={{
             position: "absolute",
+
           }}
           className="z-10 mx-auto"
         >
@@ -121,6 +123,10 @@ function VideoPlayer() {
             maxHeight: "400px",
             visibility: "hidden",
           }}
+          onTimeUpdate={() => {
+            setVideoTimer(videoRef.current.currentTime * 100 / videoRef.current.duration)
+          }}
+          onEnded={() => setPaused(true)}
           id="videoElement"
           src={
             inputVideo
@@ -136,20 +142,28 @@ function VideoPlayer() {
       </div>
       <div className="flex w-full h-8 ">
         <button
-          className={`text-2xl ml-1 h-4 w-4 text-center mt-1`}
+          className={`text-2xl mx-1 h-4 w-4 text-center mt-1 hover:text-blue-600`}
           onClick={onPlayPauseClick}
         >
           {paused ? <VscPlay /> : <VscDebugPause />}
         </button>
-        <div className="w-full p-1 ml-2 bg-gray-200">
-          <div className="w-1/2 h-full bg-blue-300" />
+        <div className="w-full p-1 mt-1 ml-2 bg-blue-200 rounded-md">
+          <div style={{width: videoTimer + "%"}} className="h-full bg-blue-300 " />
         </div>
-        <input
-          type="file"
-          accept="video/*"
-          className="w-8 px-1 cursor-pointer"
-          onChange={(e) => setInputVideo(e.currentTarget.files[0].path)}
-        />
+        <div className="w-8 image-upload">
+          <label htmlFor="file-input">
+            <VscFolderOpened className="w-6 h-6 mt-1 ml-1 cursor-pointer hover:text-green-600" />
+          </label>
+          <input
+            id="file-input"
+            type="file"
+            accept="video/*"
+            className="hidden w-8 px-1 cursor-pointer"
+            onChange={(e) => setInputVideo(e.currentTarget.files[0].path)}
+          />
+          {/* <input id="file-input" type="file" /> */}
+        </div>
+
 
       </div>
     </div>
