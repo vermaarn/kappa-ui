@@ -1,7 +1,8 @@
 import { IpcRendererEvent } from "electron";
 import React, { useEffect, useRef, useState } from "react";
 import Canvas from "../../components/Canvas";
-import { VscPlay, VscDebugPause, VscFolderOpened } from "react-icons/vsc"
+import { VscPlay, VscDebugPause, VscFolderOpened, VscServerProcess } from "react-icons/vsc"
+import toast from "react-hot-toast";
 
 type PrincipalMotionType = "x" | "y" | "w";
 
@@ -20,11 +21,6 @@ function VideoPlayer() {
   const onPlayPauseClick: React.MouseEventHandler<
     HTMLButtonElement
   > = async () => {
-    const landmarks = await (window as any).electronAPI.processLandmarks(
-      "1"
-    );
-    console.log(landmarks);
-
     const videoEl = videoRef.current;
     if (!videoEl) return;
     if (paused) {
@@ -34,6 +30,21 @@ function VideoPlayer() {
     }
     setPaused((p) => !p);
   };
+
+  const onProcessButtonClick: React.MouseEventHandler<HTMLButtonElement> = async () => {
+
+    const landmarksPromise: Promise<any> = (window as any).electronAPI.processLandmarks(
+      "1"
+    );
+
+    const landmarks = await toast.promise(
+      landmarksPromise, {
+      loading: "Loading..",
+      success: "Processing Sucessful!",
+      error: "Processing Failed."
+    })
+    console.log(landmarks);
+  }
 
   const draw = (ctx: CanvasRenderingContext2D, frameCount: number) => {
     const video = videoRef.current;
@@ -149,12 +160,12 @@ function VideoPlayer() {
         </button>
         <div className="w-full p-1 mt-1 ml-2 bg-blue-200 rounded-md">
           <div className="w-full h-full" onClick={(e) => {
-          const el = e.currentTarget;
-          const click =  e.clientX - el.offsetLeft
-          const precent = click / el.offsetWidth
-          setVideoTimer(precent * 100)
-          videoRef.current.currentTime = videoRef.current.duration * precent
-        }} >
+            const el = e.currentTarget;
+            const click = e.clientX - el.offsetLeft
+            const precent = click / el.offsetWidth
+            setVideoTimer(precent * 100)
+            videoRef.current.currentTime = videoRef.current.duration * precent
+          }} >
             <div style={{ width: videoTimer + "%" }} className="h-full bg-blue-300 " />
           </div>
         </div>
@@ -169,8 +180,11 @@ function VideoPlayer() {
             className="hidden w-8 px-1 cursor-pointer"
             onChange={(e) => setInputVideo(e.currentTarget.files[0].path)}
           />
-          {/* <input id="file-input" type="file" /> */}
         </div>
+        <button onClick={onProcessButtonClick} className="w-8">
+          <VscServerProcess className="w-6 h-6 mt-1 ml-1 cursor-pointer hover:text-green-600" />
+        </button>
+
 
 
       </div>

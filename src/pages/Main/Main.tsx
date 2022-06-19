@@ -29,6 +29,7 @@ import VideoPlayer from "./VideoPlayer";
 import VideoTimeline from "./VideoTimeline";
 import MotionView from "./MotionView";
 import Toolbar from "./Toolbar";
+import { Toaster } from "react-hot-toast";
 
 type LandmarkGroupType =
   | "nose"
@@ -612,6 +613,7 @@ function Main() {
 
   return (
     <div className="flex w-full">
+      <Toaster />
       <div className="flex flex-col w-full p-2">
         <div className="flex w-full">
           <div className="w-1/2 h-full p-1 bg-gray-200">
