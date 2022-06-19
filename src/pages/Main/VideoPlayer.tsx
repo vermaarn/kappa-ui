@@ -148,7 +148,15 @@ function VideoPlayer() {
           {paused ? <VscPlay /> : <VscDebugPause />}
         </button>
         <div className="w-full p-1 mt-1 ml-2 bg-blue-200 rounded-md">
-          <div style={{width: videoTimer + "%"}} className="h-full bg-blue-300 " />
+          <div className="w-full h-full" onClick={(e) => {
+          const el = e.currentTarget;
+          const click =  e.clientX - el.offsetLeft
+          const precent = click / el.offsetWidth
+          setVideoTimer(precent * 100)
+          videoRef.current.currentTime = videoRef.current.duration * precent
+        }} >
+            <div style={{ width: videoTimer + "%" }} className="h-full bg-blue-300 " />
+          </div>
         </div>
         <div className="w-8 image-upload">
           <label htmlFor="file-input">

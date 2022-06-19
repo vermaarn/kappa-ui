@@ -75,6 +75,40 @@ function VideoTimeline() {
         group: 1,
       },
     ]);
+
+    timeline.on("select", (e) => {
+      if (e.items) {
+        const itemGroup = e.items.reduce((prevArr: any[], itemId: number) => {
+          const item = items.get(itemId);
+          if (item.content !== NEUTRAL_LANDMARK_ICON) {
+            return [item, ...prevArr];
+          }
+          return prevArr;
+        }, []);
+
+        // setSelectedTimeBlocks(itemGroup);
+      }
+    });
+
+    timeline.on("doubleClick", (e) => {
+      if (e.item) {
+        const item = items.get(e.item as number | string);
+        if (!item.end) return;
+        const itemStart = new Date(item.start).getTime();
+        const itemEnd = new Date(item.end).getTime();
+
+        const neutralLandmark = {
+          content: NEUTRAL_LANDMARK_ICON,
+          editable: true,
+          start: itemStart + Math.floor((itemEnd - itemStart) / 2),
+          group: e.group,
+        };
+
+        items.add(neutralLandmark);
+      }
+    });
+
+
   }, []);
 
   return <div ref={videoTimelineRef} className="w-full p-2 mt-2"></div>;
